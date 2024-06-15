@@ -4,20 +4,23 @@
       options = {
         services.powerkit = {
           enable = lib.mkEnableOption "powerkit";
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = pkgs.libsForQt5.callPackage ./powerkit-1_0.nix { };
+          };
         };
       };
       config =
         let
           cfg = config.services.powerkit;
-          powerkit = pkgs.libsForQt5.callPackage ./powerkit-1_0.nix { };
         in
         lib.mkIf cfg.enable {
           services.udev.packages = [
-            powerkit
+            cfg.package
           ];
           services.upower.enable = true;
           environment.systemPackages = [
-            powerkit
+            cfg.package
             pkgs.xscreensaver
           ];
           systemd.user.services.powerkit = {
@@ -26,7 +29,7 @@
             serviceConfig = {
               Type = "dbus";
               BusName = "org.freedesktop.PowerKit";
-              ExecStart = "${powerkit}/bin/powerkit";
+              ExecStart = "${cfg.package}/bin/powerkit";
             };
           };
         };
